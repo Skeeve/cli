@@ -4353,3 +4353,33 @@ func TestJSONExportCommand(t *testing.T) {
 `
 	assert.JSONEq(t, expected, string(out))
 }
+
+func TestCommand_TestCountFunction(t *testing.T) {
+	var counted int
+
+	cmd := buildMinimalTestCommand()
+	cmd.UseShortOptionHandling = true
+	cmd.Flags = []Flag{
+		&BoolFlag{Name: "countthis", Aliases: []string{"c"}},
+	}
+	cmd.Action = func(_ context.Context, cmd *Command) error {
+		counted = cmd.Count("countthis")
+		return nil
+	}
+
+	counted = 42
+
+	_ = cmd.Run(buildTestContext(t), []string{"", "-c", "-c", "-c"})
+	assert.Equal(t, 3, counted) // it should be 3 but is 4
+
+	counted = 42
+
+	_ = cmd.Run(buildTestContext(t), []string{"", "--countthis", "--countthis", "--countthis"})
+	assert.Equal(t, 3, counted) // it should be 3 but is 4
+
+	counted = 42
+
+	_ = cmd.Run(buildTestContext(t), []string{"", "--countthis", "-c", "-c"})
+	assert.Equal(t, 3, counted) // it should be 3 but is 42
+
+}
